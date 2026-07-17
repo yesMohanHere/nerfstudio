@@ -21,21 +21,31 @@ from typing import TYPE_CHECKING
 import torch
 from jaxtyping import Float
 from torch import Tensor
-from torch.amp import custom_bwd, custom_fwd
 from torch.autograd import Function
+
+try:
+    # torch >= 2.4: custom_fwd/custom_bwd live in torch.amp and require device_type
+    from torch.amp import custom_bwd, custom_fwd
+
+    _CUSTOM_AMP_KWARGS = {"device_type": "cuda"}
+except ImportError:
+    # torch < 2.4: custom_fwd/custom_bwd live in torch.cuda.amp (no device_type argument)
+    from torch.cuda.amp import custom_bwd, custom_fwd
+
+    _CUSTOM_AMP_KWARGS = {}
 
 
 class _TruncExp(Function):
     # Implementation from torch-ngp:
     # https://github.com/ashawkey/torch-ngp/blob/93b08a0d4ec1cc6e69d85df7f0acdfb99603b628/activation.py
     @staticmethod
-    @custom_fwd(cast_inputs=torch.float32, device_type="cuda")
+    @custom_fwd(cast_inputs=torch.float32, **_CUSTOM_AMP_KWARGS)
     def forward(ctx, x):
         ctx.save_for_backward(x)
         return torch.exp(x)
 
     @staticmethod
-    @custom_bwd(device_type="cuda")
+    @custom_bwd(**_CUSTOM_AMP_KWARGS)
     def backward(ctx, g):
         x = ctx.saved_tensors[0]
         return g * torch.exp(x.clamp(-15, 15))
