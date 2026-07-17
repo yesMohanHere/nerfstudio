@@ -33,7 +33,7 @@ try:
     custom_bwd = _custom_bwd(device_type="cuda")
 except ImportError:
     # torch < 2.4: custom_fwd/custom_bwd live in torch.cuda.amp (no device_type argument)
-    from torch.cuda.amp import custom_bwd, custom_fwd
+    from torch.cuda.amp import custom_bwd, custom_fwd  # type: ignore
 
 
 class _TruncExp(Function):
