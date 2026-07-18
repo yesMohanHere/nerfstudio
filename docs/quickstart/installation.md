@@ -267,6 +267,14 @@ docker build \
     --file Dockerfile .
 ```
 
+For NVIDIA Blackwell GPUs (RTX 50-series, compute capability sm_120), use the CUDA 12.8-based
+`Dockerfile.blackwell` variant instead — the stock image targets CUDA 11.8, which does not
+support sm_120:
+
+```bash
+docker build --tag nerfstudio-blackwell -f Dockerfile.blackwell .
+```
+
 ### Using an interactive container
 
 The docker container can be launched with an interactive terminal where nerfstudio commands can be entered as usual. Some parameters are required and some are strongly recommended for usage as following:
